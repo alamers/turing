@@ -12,8 +12,14 @@ import lejos.robotics.RegulatedMotor;
 import lejos.robotics.filter.LinearCalibrationFilter;
 import lejos.robotics.filter.MeanFilter;
 
-public class Test {
+/**
+ * Represents the Lego Turing Machine which has a few simple instructions to be used.
+ * It needs calibration values. It has an internal calibration mechanism but it can also load the values from a File.
+ *
+ */
+public class TuringMachine {
 
+	private static final String CALIBRATION_FILE = "legoturingmachine.calibrate";
 	private static final Port TAPE_PORT = MotorPort.A;
 	private static final Port WRITER_PORT = MotorPort.B;
 	private static final Port READER_ARM_PORT = MotorPort.C;
@@ -29,21 +35,15 @@ public class Test {
 	private final RegulatedMotor readerArm;
 	private final LinearCalibrationFilter reader;
 	private final RegulatedMotor tape;
+	
+	private boolean calibrated;
 
-	public static void main(String[] args) {
-		LCD.drawString("Turing Machine", 0, 0);
-
-		Test test = new Test();
-
-		 test.calibrate();
-		 test.writeOnesAndZeros();
-	}
-
-	public Test() {
+	public TuringMachine() {
+		calibrated = false;
+		
 		writer = new EV3LargeRegulatedMotor(WRITER_PORT);
 		readerArm = new EV3LargeRegulatedMotor(READER_ARM_PORT);
 		tape = new EV3MediumRegulatedMotor(TAPE_PORT);
-
 		readerArm.setSpeed(READER_ARM_SPEED);
 
 		EV3ColorSensor sensor = new EV3ColorSensor(READER_PORT);
@@ -54,27 +54,8 @@ public class Test {
 		reader.setScaleCalibration(-1, 1);
 	}
 
-	private void writeOnesAndZeros() {
-		final int steps = 10;
-		for (int i=0; i<steps; i++) {
-			boolean current = read();
-			boolean future = i%2==1;
-			
-			if (future) {
-				write1(current);
-			} else {
-				write0(current);
-			}
-			
-			forward();
-		}
-		
-		for (int i=0; i<steps; i++) {
-			backward();
-		}
-	}
-	
-	private void calibrate() {
+	public void calibrate() {
+		Button.LEDPattern(6);
 		final int samplesPerWrite = 2;
 		final int writes = 3;
 
@@ -114,17 +95,20 @@ public class Test {
 		}
 
 		reader.stopCalibration();
+		
+		Button.LEDPattern(0);
+		
+		calibrated = true;
+	}
+	
+	public void saveCalibration() {
+		reader.save(CALIBRATION_FILE);
 	}
 
-	private void testCalibrate() {
-		for (int i = 0; i < 5; i++) {
-			read();
-			Button.ENTER.waitForPressAndRelease();
-			write1();
-			read();
-			Button.ENTER.waitForPressAndRelease();
-			write0();
-		}
+	public void loadCalibration() {
+		reader.open(CALIBRATION_FILE);
+		calibrated = true;
+
 	}
 
 	/**
@@ -134,7 +118,7 @@ public class Test {
 	 * 
 	 * @return true for a 1, false for a 0
 	 */
-	private boolean read() {
+	public boolean read() {
 		readerArm.rotate(READ_ANGLE);
 		float[] tmp = new float[reader.sampleSize()];
 		for (int k = 0; k < MEAN_SIZE; k++) {
@@ -148,7 +132,7 @@ public class Test {
 	/** 
 	 * Writes a 1. Pass along the current value which is checked to either write or do nothing.
 	 */
-	private void write1(boolean current) {
+	public void write1(boolean current) {
 		if(!current) {
 			write1();
 		}
@@ -157,7 +141,7 @@ public class Test {
 	/** 
 	 * Writes a 0. Pass along the current value which is checked to either write or do nothing.
 	 */
-	private void write0(boolean current) {
+	public void write0(boolean current) {
 		if(current) {
 			write1();
 		}
@@ -177,36 +161,15 @@ public class Test {
 	/**
 	 * Move the tape 1 position back to the beginning.
 	 */
-	private void backward() {
+	public void backward() {
 		tape.rotate(-DEGREES_PER_BIT);
 	}
 	
 	/**
 	 * Move the tape 1 position further up the tape.
 	 */
-	private void forward() {
+	public void forward() {
 		tape.rotate(DEGREES_PER_BIT);
 	}
 	
-	private void testTape() {
-		int rotations = 1800;
-		LCD.drawString(String.format("rot per : %d", rotations), 0, 3);
-
-		while (Button.ESCAPE.isUp()) {
-			if (Button.UP.isDown()) {
-				tape.rotate(rotations);
-			}
-			if (Button.DOWN.isDown()) {
-				tape.rotate(-rotations);
-			}
-			if (Button.LEFT.isDown()) {
-				rotations -= 30;
-				LCD.drawString(String.format("rotations: %d", rotations), 0, 3);
-			}
-			if (Button.RIGHT.isDown()) {
-				rotations += 30;
-				LCD.drawString(String.format("rotations: %d", rotations), 0, 3);
-			}
-		}
-	}
 }
