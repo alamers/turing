@@ -60,12 +60,10 @@ public class Test {
 			boolean current = read();
 			boolean future = i%2==1;
 			
-			if (current!=future) {
-				if (future) {
-					write0();
-				} else {
-					write1();
-				}
+			if (future) {
+				write1(current);
+			} else {
+				write0(current);
 			}
 			
 			forward();
@@ -148,8 +146,23 @@ public class Test {
 	}
 
 	/** 
-	 * Writes a 1. Make sure there is a 0 currently written or else we'll have a mechanical failure.
+	 * Writes a 1. Pass along the current value which is checked to either write or do nothing.
 	 */
+	private void write1(boolean current) {
+		if(!current) {
+			write1();
+		}
+	}
+
+	/** 
+	 * Writes a 0. Pass along the current value which is checked to either write or do nothing.
+	 */
+	private void write0(boolean current) {
+		if(current) {
+			write1();
+		}
+	}
+
 	private void write1() {
 		writer.rotate(WRITE_ANGLE);
 	}
