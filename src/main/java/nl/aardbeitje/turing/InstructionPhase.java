@@ -5,7 +5,7 @@ public class InstructionPhase {
 	public enum Phase {
 		READING, DECIDING, WRITING, MOVING, CHANGING
 	}
-	private final boolean readZero;
+	private final boolean readOne;
 	private final Phase phase;
 	
 	
@@ -13,17 +13,17 @@ public class InstructionPhase {
 		if (p!=Phase.READING) {
 			throw new IllegalArgumentException("Any non-reading state requires the read param to be set");
 		}
-		this.readZero = false;
+		this.readOne = false;
 		this.phase = p;
 	}
 
-	public InstructionPhase(Phase p, boolean readZero) {
+	public InstructionPhase(Phase p, boolean readOne) {
 		this.phase = p;
-		this.readZero = readZero;
+		this.readOne = readOne;
 	}
 
-	public boolean isReadZero() {
-		return readZero;
+	public boolean isReadOne() {
+		return readOne;
 	}
 
 	public Phase getPhase() {

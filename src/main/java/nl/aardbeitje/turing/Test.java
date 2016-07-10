@@ -1,15 +1,17 @@
 package nl.aardbeitje.turing;
 
+import lejos.hardware.BrickFinder;
+import lejos.hardware.ev3.EV3;
 import lejos.hardware.lcd.LCD;
 
 public class Test {
-	private static TuringMachine tm;
+	private static LegoTuringMachine tm;
 
 	public static void main(String[] args) {
 		LCD.drawString("Turing Machine", 0, 0);
 		LCD.drawString("Writing 0-1-0", 0, 2);
 
-		tm = new TuringMachine();
+		tm = new LegoTuringMachine((EV3) BrickFinder.getLocal());
 		tm.loadCalibration();
 		writeOnesAndZeros();
 	}
@@ -20,12 +22,7 @@ public class Test {
 			boolean current = tm.read();
 			boolean future = i % 2 == 1;
 
-			if (future) {
-				tm.write1(current);
-			} else {
-				tm.write0(current);
-			}
-
+			tm.write(current, future);
 			tm.forward();
 		}
 

@@ -7,7 +7,12 @@ import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Holds the program.
+ */
 public class Program {
+	public static final String START_STATE = "1";
+	public static final String HALT = "halt";
 
 	private final Map<String,Instruction> instructions;
 	public Program(InputStream in) throws IOException {
@@ -17,6 +22,9 @@ public class Program {
 		while (line!=null) {
 			parseLine(line);
 			line = r.readLine();
+		}
+		if (!instructions.containsKey(START_STATE)) {
+			throw new IllegalArgumentException("Program should contain start state " + START_STATE);
 		}
 	}
 	private void parseLine(String line) {
