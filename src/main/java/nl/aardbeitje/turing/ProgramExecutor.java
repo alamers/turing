@@ -19,6 +19,7 @@ public class ProgramExecutor {
 		for (;;) {
 			String newState = executeInstruction(instruction);
 			if (Program.HALT.equals(instruction.getSpecial())) {
+				viewer.halt();
 				return;
 			} else {
 				instruction = program.getInstructions().get(newState);

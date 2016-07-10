@@ -20,10 +20,10 @@ public class Main extends Application {
 	        controller.setStage(stage);
 	        controller.initialize();
 			
-			Scene scene = new Scene(root, 800, 600);
+			Scene scene = new Scene(root, 1200, 600);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 	 
-			stage.setTitle("FXML Welcome");
+			stage.setTitle("First8's Turing Machine");
 			stage.setScene(scene);
 			stage.show();
 

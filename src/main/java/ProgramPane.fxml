@@ -18,6 +18,7 @@
           <Menu mnemonicParsing="false" text="Test">
             <items>
               <MenuItem fx:id="menuTestInstructionPhases" mnemonicParsing="false" text="Instruction phases" />
+                  <CheckMenuItem fx:id="menuTestRunOnDummy" mnemonicParsing="false" text="Run on Virtual Turing Machine" />
             </items>
           </Menu>
         </menus>
