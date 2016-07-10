@@ -20,16 +20,18 @@ public class Program {
 		}
 	}
 	private void parseLine(String line) {
-		
-		if (line.isEmpty() ||line.startsWith("#")) {
-			return;
-		}
-		
+		System.out.println("Parsing line: " + line);
 		line = line.replace("\t", " ");
 		while (line.contains("  ")) {
 			line = line.replace("  ", " ");
 		}
+		
+		if (line.trim().isEmpty() ||line.startsWith("#")) {
+			return;
+		}
 
+		System.out.println("Cleaned line: " + line);
+		
 		String[] parts = line.split(" ");
 		String state = parts[0].substring(0, parts[0].length()-1);
 		if (!parts[0].substring(parts[0].length()-1, parts[0].length()).equals(":")) {

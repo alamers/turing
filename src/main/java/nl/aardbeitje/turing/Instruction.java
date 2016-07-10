@@ -2,6 +2,7 @@ package nl.aardbeitje.turing;
 
 public class Instruction {
 
+	private final String state;
 	private final boolean write1On0;
 	private final boolean forwardOn0;
 	private final String stateOn0;
@@ -12,6 +13,7 @@ public class Instruction {
 	
 	public Instruction(String state, String action0, String action1, String special) {
 
+		this.state = state;
 		write1On0 = parseBoolean( action0, 0, "0", "1", "Illegal write1-on-0 in state '"+state+"': ");
 		forwardOn0 = parseBoolean( action0, 1, "B", "F", "Illegal forward-on-0 in state '"+state+"': ");
 		stateOn0 = action0.substring(2);
@@ -62,12 +64,24 @@ public class Instruction {
 	public String getSpecial() {
 		return special;
 	}
+	
+	public String toStringFor0() {
+		return ( write1On0?"1":"0") + (forwardOn0?"F":"B") + stateOn0;
+	}
+
+	public String toStringFor1() {
+		return (write1On1?"1":"0") + (forwardOn1?"F":"B") + stateOn1;
+	}
 
 	@Override
 	public String toString() {
-		return ( write1On0?"1":"0") + (forwardOn0?"F":"B") + stateOn0 + " " + //
-				(write1On1?"1":"0") + (forwardOn1?"F":"B") + stateOn1 + " " + //
+		return getState()+":  " + toStringFor0() + " " + //
+				toStringFor1() + " " + //
 				(special==null?"" : special) ;
+	}
+
+	public String getState() {
+		return state;
 	}
 	
 	

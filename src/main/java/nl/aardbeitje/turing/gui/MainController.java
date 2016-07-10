@@ -1,18 +1,37 @@
 package nl.aardbeitje.turing.gui;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.CellDataFeatures;
+import javafx.scene.control.TableView;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.util.Callback;
 import javafx.stage.Stage;
 import nl.aardbeitje.turing.Instruction;
 import nl.aardbeitje.turing.InstructionPhase;
 import nl.aardbeitje.turing.InstructionPhase.Phase;
+import nl.aardbeitje.turing.Program;
 
 public class MainController {
 	private static final String family = "Helvetica";
@@ -26,6 +45,24 @@ public class MainController {
 	@FXML
 	private MenuItem menuTestInstructionPhases;
 
+	@FXML
+	private MenuItem menuFileOpen;
+	
+	@FXML
+	private TableView<Instruction> programTable;
+
+	@FXML
+	private TableColumn<Instruction, String> stateTableColumn;
+
+	@FXML
+	private TableColumn<Instruction, String> on0TableColumn;
+
+	@FXML
+	private TableColumn<Instruction, String> on1TableColumn;
+
+	@FXML
+	private TableColumn<Instruction, String> specialTableColumn;
+
 	private Stage stage;
 
 	public void setStage(Stage stage) {
@@ -35,6 +72,49 @@ public class MainController {
 	public void initialize() {
 		logLabel.setText("Line 1\nLine2");
 		menuTestInstructionPhases.setOnAction(e -> testInstructionPhases());
+		menuFileOpen.setOnAction(e -> openFile());
+	}
+
+    public void openFile() {
+        try {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Open Turing Machine Program");
+            fileChooser.getExtensionFilters().addAll(
+                    new ExtensionFilter("Turing Machine Files", "*.tm"),
+                    new ExtensionFilter("All Files", "*.*"));
+            File selectedFile = fileChooser.showOpenDialog(stage);
+            openFile(selectedFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+	private void openFile(File selectedFile) {
+		try {
+			Program p = new Program(new FileInputStream(selectedFile));
+			loadProgram(p);
+		} catch (Exception e) {
+			try {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Open File Exception");
+				alert.setHeaderText("Sorry, couldn't open " + selectedFile.getCanonicalPath());
+				alert.setContentText("It failed due to: " + e.getMessage() + ". More info in the console.");
+				e.printStackTrace();
+				alert.showAndWait();
+			} catch (IOException f) {
+				f.printStackTrace();
+			}
+		}
+		
+	}
+
+	private void loadProgram(Program p) {
+		ObservableList<Instruction> instructions = FXCollections.observableList(new ArrayList<>(p.getInstructions().values()));
+		stateTableColumn.setCellValueFactory( d -> new SimpleStringProperty(d.getValue().getState()));
+		on0TableColumn.setCellValueFactory( d -> new SimpleStringProperty(d.getValue().toStringFor0()));
+		on1TableColumn.setCellValueFactory( d -> new SimpleStringProperty(d.getValue().toStringFor1()));
+		specialTableColumn.setCellValueFactory( d -> new SimpleStringProperty(d.getValue().getSpecial()));
+		programTable.setItems(instructions);
 	}
 
 	public void showCurrentInstruction(Instruction i, InstructionPhase ip) {

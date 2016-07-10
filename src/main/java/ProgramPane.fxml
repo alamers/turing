@@ -9,6 +9,11 @@
    <items>
       <MenuBar>
         <menus>
+            <Menu mnemonicParsing="false" text="File">
+              <items>
+                <MenuItem fx:id="menuFileOpen" mnemonicParsing="false" text="Open" />
+              </items>
+            </Menu>
           <Menu mnemonicParsing="false" text="Test">
             <items>
               <MenuItem fx:id="menuTestInstructionPhases" mnemonicParsing="false" text="Instruction phases" />
@@ -22,9 +27,10 @@
                <children>
                   <TableView fx:id="programTable" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <columns>
-                        <TableColumn prefWidth="75.0" text="State" />
-                        <TableColumn prefWidth="75.0" text="On 0" />
-                        <TableColumn prefWidth="75.0" text="On 1" />
+                        <TableColumn fx:id="stateTableColumn" prefWidth="75.0" text="State" />
+                        <TableColumn fx:id="on0TableColumn" prefWidth="75.0" text="On 0" />
+                        <TableColumn fx:id="on1TableColumn" prefWidth="75.0" text="On 1" />
+                        <TableColumn fx:id="specialTableColumn" prefWidth="75.0" text="Special" />
                      </columns>
                   </TableView>
                </children>
