@@ -3,16 +3,16 @@ package nl.aardbeitje.turing.firmware;
 import lejos.hardware.BrickFinder;
 import lejos.hardware.ev3.EV3;
 import lejos.hardware.lcd.LCD;
-import nl.aardbeitje.turing.LegoTuringMachine;
+import nl.aardbeitje.turing.LocalLegoTuringMachine;
 
 public class Test {
-	private static LegoTuringMachine tm;
+	private static LocalLegoTuringMachine tm;
 
 	public static void main(String[] args) {
 		LCD.drawString("Turing Machine", 0, 0);
 		LCD.drawString("Writing 0-1-0", 0, 2);
 
-		tm = new LegoTuringMachine((EV3) BrickFinder.getLocal());
+		tm = new LocalLegoTuringMachine((EV3) BrickFinder.getLocal());
 		tm.loadCalibration();
 		writeOnesAndZeros();
 	}

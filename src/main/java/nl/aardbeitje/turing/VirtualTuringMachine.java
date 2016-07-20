@@ -50,4 +50,9 @@ public class VirtualTuringMachine  implements TuringMachine {
 			e.printStackTrace();
 		}
 	}
+
+	@Override
+	public void readPosition() {
+		pause();
+	}
 }

@@ -29,7 +29,7 @@ public class ProgramExecutor {
 
 	private String executeInstruction(Instruction i) {
 		viewer.currentInstruction(i, new InstructionPhase(Phase.READING));
-		boolean read1 = machine.read();
+		boolean read1 = machine.readOnly();
 		viewer.currentInstruction(i, new InstructionPhase(Phase.DECIDING, read1));
 		machine.readReturn();
 		viewer.currentInstruction(i, new InstructionPhase(Phase.WRITING, read1));

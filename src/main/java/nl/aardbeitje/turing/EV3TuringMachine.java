@@ -1,13 +1,9 @@
 package nl.aardbeitje.turing;
 
-import lejos.hardware.ev3.EV3;
-import lejos.hardware.motor.EV3LargeRegulatedMotor;
-import lejos.hardware.motor.EV3MediumRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
 import lejos.hardware.port.SensorPort;
-import lejos.hardware.sensor.EV3ColorSensor;
-import lejos.robotics.RegulatedMotor;
+import lejos.robotics.SampleProvider;
 import lejos.robotics.filter.LinearCalibrationFilter;
 import lejos.robotics.filter.MeanFilter;
 
@@ -17,47 +13,37 @@ import lejos.robotics.filter.MeanFilter;
  * but it can also load the values from a File.
  *
  */
-public class LegoTuringMachine implements TuringMachine {
+abstract class EV3TuringMachine implements TuringMachine {
 
-	private static final String CALIBRATION_FILE = "legoturingmachine.calibrate";
-	private static final Port TAPE_PORT = MotorPort.A;
-	private static final Port WRITER_PORT = MotorPort.B;
-	private static final Port READER_ARM_PORT = MotorPort.C;
-	private static final Port READER_PORT = SensorPort.S1;
+	private static final String CALIBRATION_FILE = "legoturingmachine";
+	protected static final Port TAPE_PORT = MotorPort.A;
+	protected static final Port WRITER_PORT = MotorPort.B;
+	protected static final Port READER_ARM_PORT = MotorPort.C;
+	protected static final Port READER_PORT = SensorPort.S1;
 
-	private static final int WRITE_ANGLE = 180;
-	private static final int READ_ANGLE = 49;
-	private static final int READER_ARM_SPEED = 80;
-	private static final int MEAN_SIZE = 30;
-	private static final int DEGREES_PER_BIT = 1800;
-
-	private final EV3 ev3;
-	private final RegulatedMotor writer;
-	private final RegulatedMotor readerArm;
-	private final LinearCalibrationFilter reader;
-	private final RegulatedMotor tape;
+	protected static final int WRITE_ANGLE = 180;
+	protected static final int READ_ANGLE = 55;
+	protected static final int READER_ARM_SPEED = 80;
+	protected static final int MEAN_SIZE = 30;
+	protected static final int DEGREES_PER_BIT = 1800;
 
 	private boolean calibrated;
+	private LinearCalibrationFilter reader;
 
-	public LegoTuringMachine(EV3 ev3) {
-		this.ev3 = ev3;
+	public EV3TuringMachine() {
 		calibrated = false;
-
-		writer = new EV3LargeRegulatedMotor(ev3.getPort(WRITER_PORT.getName()));
-		readerArm = new EV3LargeRegulatedMotor(ev3.getPort(READER_ARM_PORT.getName()));
-		tape = new EV3MediumRegulatedMotor(ev3.getPort(TAPE_PORT.getName()));
-		readerArm.setSpeed(READER_ARM_SPEED);
-
-		EV3ColorSensor sensor = new EV3ColorSensor(ev3.getPort(READER_PORT.getName()));
-		sensor.setCurrentMode("Red");
-		MeanFilter mean = new MeanFilter(sensor, MEAN_SIZE);
+	}
+	
+	private void createCalibrationFilter() {
+		MeanFilter mean = new MeanFilter(getSensor(), MEAN_SIZE);
 		reader = new LinearCalibrationFilter(mean);
 		reader.setCalibrationType(LinearCalibrationFilter.OFFSET_AND_SCALE_CALIBRATION);
 		reader.setScaleCalibration(-1, 1);
 	}
 
 	public void calibrate() {
-		ev3.getLED().setPattern(6);
+		createCalibrationFilter();
+		setLEDPattern(6);
 		final int samplesPerWrite = 2;
 		final int writes = 3;
 
@@ -68,7 +54,7 @@ public class LegoTuringMachine implements TuringMachine {
 
 		for (int j = 0; j < writes; j++) {
 			for (int i = 0; i < samplesPerWrite; i++) {
-				readerArm.rotate(READ_ANGLE);
+				readPosition();
 
 				reader.resumeCalibration();
 				for (int k = 0; k < MEAN_SIZE; k++) {
@@ -76,21 +62,21 @@ public class LegoTuringMachine implements TuringMachine {
 				}
 				reader.suspendCalibration();
 				for (int k = 0; k < reader.getScaleCorrection().length; k++) {
-					ev3.getTextLCD().drawString(String.format("c: %2.3f / %2.3f", reader.getScaleCorrection()[k],
+					drawString(String.format("c: %2.3f / %2.3f", reader.getScaleCorrection()[k],
 							reader.getOffsetCorrection()[k]), 0, k + 1);
 				}
-				readerArm.rotate(-READ_ANGLE);
+				readReturn();
 			}
 			write1();
 
 			for (int i = 0; i < samplesPerWrite; i++) {
-				readerArm.rotate(READ_ANGLE);
+				readPosition();
 				reader.resumeCalibration();
 				for (int k = 0; k < MEAN_SIZE; k++) {
 					reader.fetchSample(tmp, 0);
 				}
 				reader.suspendCalibration();
-				readerArm.rotate(-READ_ANGLE);
+				readReturn();
 			}
 
 			write0();
@@ -98,7 +84,7 @@ public class LegoTuringMachine implements TuringMachine {
 
 		reader.stopCalibration();
 
-		ev3.getLED().setPattern(0);
+		setLEDPattern(0);
 		calibrated = true;
 	}
 
@@ -107,6 +93,7 @@ public class LegoTuringMachine implements TuringMachine {
 	}
 
 	public void loadCalibration() {
+		createCalibrationFilter();
 		reader.open(CALIBRATION_FILE);
 		calibrated = true;
 
@@ -124,18 +111,13 @@ public class LegoTuringMachine implements TuringMachine {
 		if (!calibrated) {
 			throw new IllegalStateException("TuringMachine not yet calibrated");
 		}
-		readerArm.rotate(READ_ANGLE);
+		readPosition();
 		float[] tmp = new float[reader.sampleSize()];
 		for (int k = 0; k < MEAN_SIZE; k++) {
 			reader.fetchSample(tmp, 0);
 		}
-		ev3.getTextLCD().drawString(String.format("read: %2.1f = %b", tmp[0], tmp[0] < 0), 0, 3);
+		drawString(String.format("read: %2.1f = %b", tmp[0], tmp[0] < 0), 0, 3);
 		return tmp[0] < 0;
-	}
-
-	@Override
-	public void readReturn() {
-		readerArm.rotate(-READ_ANGLE);
 	}
 
 	/**
@@ -153,18 +135,6 @@ public class LegoTuringMachine implements TuringMachine {
 		}
 	}
 
-	private void write1() {
-		writer.rotate(WRITE_ANGLE);
-	}
-
-	/**
-	 * Writes a 0. Make sure there is a 1 currently written or else we'll have a
-	 * mechanical failure.
-	 */
-	private void write0() {
-		writer.rotate(-WRITE_ANGLE);
-	}
-
 	/**
 	 * Move the tape.
 	 * 
@@ -179,19 +149,13 @@ public class LegoTuringMachine implements TuringMachine {
 			backward();
 		}
 	}
-
-	/**
-	 * Move the tape 1 position back to the beginning.
-	 */
-	public void backward() {
-		tape.rotate(-DEGREES_PER_BIT);
-	}
-
-	/**
-	 * Move the tape 1 position further up the tape.
-	 */
-	public void forward() {
-		tape.rotate(DEGREES_PER_BIT);
-	}
+	
+	protected abstract void forward();
+	protected abstract void backward();
+	protected abstract void write1();
+	protected abstract void write0();
+	protected abstract SampleProvider getSensor();
+	protected abstract void setLEDPattern(int i);
+	protected abstract void drawString(String txt, int x, int y);
 
 }

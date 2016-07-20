@@ -37,4 +37,6 @@ public interface TuringMachine {
 	 * Moves the tape forward (true) or backward (false).
 	 */
 	void move(boolean forward);
+
+	void readPosition();
 }

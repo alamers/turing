@@ -26,13 +26,13 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import lejos.hardware.BrickFinder;
-import lejos.hardware.ev3.EV3;
+import lejos.remote.ev3.RemoteEV3;
 import nl.aardbeitje.turing.Instruction;
 import nl.aardbeitje.turing.InstructionPhase;
 import nl.aardbeitje.turing.InstructionPhase.Phase;
-import nl.aardbeitje.turing.LegoTuringMachine;
 import nl.aardbeitje.turing.Program;
 import nl.aardbeitje.turing.ProgramExecutor;
+import nl.aardbeitje.turing.RemoteLegoTuringMachine;
 import nl.aardbeitje.turing.TuringMachine;
 import nl.aardbeitje.turing.TuringViewer;
 import nl.aardbeitje.turing.VirtualTuringMachine;
@@ -91,13 +91,22 @@ public class MainController implements TuringViewer {
 		Thread t = new Thread() {
 			@Override
 			public void run() {
-				TuringMachine machine = (menuTestRunOnDummy.isSelected() ?
-						new VirtualTuringMachine("1101110000000000")
-						: new LegoTuringMachine((EV3) BrickFinder.getDefault()));
+				TuringMachine machine = instantiateTuringMachine();
 				new ProgramExecutor(program, machine, MainController.this).runProgram();
 			}
 		};
 		t.start();
+	}
+
+	protected TuringMachine instantiateTuringMachine() {
+
+		if (menuTestRunOnDummy.isSelected()) {
+			return new VirtualTuringMachine("1101110000000000");
+		} else {
+			RemoteLegoTuringMachine machine = new RemoteLegoTuringMachine((RemoteEV3) BrickFinder.getDefault());
+			machine.loadCalibration();
+			return machine;
+		}
 	}
 
 	public void openFile() {
