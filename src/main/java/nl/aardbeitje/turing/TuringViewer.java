@@ -6,4 +6,6 @@ public interface TuringViewer {
 
 	void halt();
 
+	void start();
+
 }

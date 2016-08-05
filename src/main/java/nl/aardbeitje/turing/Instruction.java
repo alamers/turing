@@ -52,9 +52,21 @@ public class Instruction {
 	public boolean isWrite1On1() {
 		return write1On1;
 	}
+	
+	public boolean isWrite1(boolean readOne) {
+		return readOne? isWrite1On1() : isWrite1On0();
+	}
 
 	public boolean isForwardOn1() {
 		return forwardOn1;
+	}
+
+	public boolean isForward(boolean readOne) {
+		return readOne? isForwardOn1() : isForwardOn0();
+	}
+
+	public String getState(boolean readOne) {
+		return readOne? getStateOn1() : getStateOn0();
 	}
 
 	public String getStateOn1() {
@@ -83,6 +95,9 @@ public class Instruction {
 	public String getState() {
 		return state;
 	}
+
+
+
 	
 	
 

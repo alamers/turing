@@ -8,13 +8,16 @@ import java.util.ArrayList;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.paint.Color;
@@ -41,9 +44,6 @@ public class MainController implements TuringViewer {
 	private static final String family = "Helvetica";
 
 	@FXML
-	private Label logLabel;
-
-	@FXML
 	private TextFlow currentInstructionTextFlow;
 
 	@FXML
@@ -56,6 +56,8 @@ public class MainController implements TuringViewer {
 	private MenuItem menuFileOpen;
 	@FXML
 	private MenuItem menuFileRun;
+	@FXML
+	private MenuItem menuFileCalibrate;
 
 	@FXML
 	private TableView<Instruction> programTable;
@@ -72,19 +74,40 @@ public class MainController implements TuringViewer {
 	@FXML
 	private TableColumn<Instruction, String> specialTableColumn;
 
+	@FXML
+	private ListView<String> logListView;
+	ObservableList<String> log = FXCollections.observableArrayList();
+
 	private Stage stage;
 
 	private Program program;
+
+	private RemoteLegoTuringMachine machine;
 
 	public void setStage(Stage stage) {
 		this.stage = stage;
 	}
 
 	public void initialize() {
-		logLabel.setText("Line 1\nLine2");
 		menuTestInstructionPhases.setOnAction(e -> testInstructionPhases());
 		menuFileOpen.setOnAction(e -> openFile());
 		menuFileRun.setOnAction(e -> runProgram());
+		menuFileCalibrate.setOnAction(e -> calibrate());
+		logListView.setItems(log);
+		logListView.getItems().addListener((ListChangeListener<String>) c -> {
+			c.next();
+			final int size = logListView.getItems().size();
+			if (size > 0) {
+				logListView.scrollTo(size - 1);
+			}
+		});
+	}
+
+	private void calibrate() {
+		machine = new RemoteLegoTuringMachine((RemoteEV3) BrickFinder.getDefault());
+		showCalibrationInit();
+		machine.calibrate();
+		machine.saveCalibration();
 	}
 
 	private void runProgram() {
@@ -99,14 +122,32 @@ public class MainController implements TuringViewer {
 	}
 
 	protected TuringMachine instantiateTuringMachine() {
-
 		if (menuTestRunOnDummy.isSelected()) {
 			return new VirtualTuringMachine("1101110000000000");
 		} else {
-			RemoteLegoTuringMachine machine = new RemoteLegoTuringMachine((RemoteEV3) BrickFinder.getDefault());
-			machine.loadCalibration();
+			if (machine == null || !machine.isCalibrated()) {
+				showCalibrationWarning();
+				throw new IllegalStateException("Machine not calibrated");
+			}
 			return machine;
 		}
+	}
+
+	private void showCalibrationInit() {
+		Alert alert = new Alert(AlertType.INFORMATION);
+		alert.setTitle("Calibration");
+		alert.setHeaderText("Start calibration");
+		alert.setContentText("Check if the reader is on a correct position and the tape reads a 0 at that position");
+		alert.showAndWait();
+	}
+
+	private void showCalibrationWarning() {
+		Alert alert = new Alert(AlertType.INFORMATION);
+		alert.setTitle("Calibration");
+		alert.setHeaderText("Calibrate first");
+		alert.setContentText(
+				"The Turing Machine has not been calibrated yet. Please calibrate first, see the File menu.");
+		alert.showAndWait();
 	}
 
 	public void openFile() {
@@ -155,28 +196,8 @@ public class MainController implements TuringViewer {
 	public void currentInstruction(Instruction i, InstructionPhase ip) {
 		Platform.runLater(() -> {
 
-			Text stateText = new Text(i.getState() + ": ");
-			stateText.setFont(Font.font(family, FontWeight.BOLD, 50));
-			stateText.setFill(Color.BLACK);
-
-			Text on0Text = new Text(i.toStringFor0() + " ");
-			on0Text.setFont(Font.font(family, FontWeight.BOLD, 50));
-			on0Text.setFill(Color.BLACK);
-			on0Text.setUnderline(ip.getPhase() != Phase.READING && !ip.isReadOne());
-
-			Text on1Text = new Text(i.toStringFor1() + "\n");
-			on1Text.setFont(Font.font(family, FontWeight.BOLD, 50));
-			on1Text.setFill(Color.BLACK);
-			on0Text.setUnderline(ip.getPhase() != Phase.READING && ip.isReadOne());
-
-			Text intro = new Text("First, read the tape. Then:\n");
-			intro.setFill(Color.DARKGREY);
-			intro.setFont(Font.font(family, 25));
-			intro.setUnderline(ip.getPhase() == Phase.READING);
-
-			currentInstructionTextFlow.getChildren().clear();
-			currentInstructionTextFlow.getChildren().addAll(stateText, on0Text, on1Text, intro);
-
+			log(i, ip);
+			buildInstructionText(i, ip);
 			addInstruction(currentInstructionTextFlow, false, i.isWrite1On0(), i.isForwardOn0(), i.getStateOn0(),
 					ip.getPhase(), ip.isReadOne());
 			addInstruction(currentInstructionTextFlow, true, i.isWrite1On1(), i.isForwardOn1(), i.getStateOn1(),
@@ -184,6 +205,62 @@ public class MainController implements TuringViewer {
 
 			programTable.getSelectionModel().select(i);
 		});
+	}
+
+	@Override
+	public void start() {
+		Platform.runLater(() -> {
+			log.clear();
+		});
+	}
+
+	private void log(Instruction i, InstructionPhase ip) {
+		String line;
+		switch (ip.getPhase()) {
+		case CHANGING:
+			line = "I changed to state " + i.getState(ip.isReadOne());
+			break;
+		case READING:
+			line = "I read the current bit on the tape";
+			break;
+		case DECIDING:
+			line = "It was a " + (ip.isReadOne() ? "1" : "0");
+			break;
+		case MOVING:
+			line = "Moving the tape " + (i.isForward(ip.isReadOne()) ? "forward" : "backward");
+			break;
+		case WRITING:
+			line = "Writing a " + (i.isWrite1(ip.isReadOne()) ? "1" : "0");
+			break;
+		default:
+			line = "Something strange happened";
+			break;
+		}
+		log.add(line + "\n");
+	}
+
+	private void buildInstructionText(Instruction i, InstructionPhase ip) {
+		Text stateText = new Text(i.getState() + ": ");
+		stateText.setFont(Font.font(family, FontWeight.BOLD, 50));
+		stateText.setFill(Color.BLACK);
+
+		Text on0Text = new Text(i.toStringFor0() + " ");
+		on0Text.setFont(Font.font(family, FontWeight.BOLD, 50));
+		on0Text.setFill(Color.BLACK);
+		on0Text.setUnderline(ip.getPhase() != Phase.READING && !ip.isReadOne());
+
+		Text on1Text = new Text(i.toStringFor1() + "\n");
+		on1Text.setFont(Font.font(family, FontWeight.BOLD, 50));
+		on1Text.setFill(Color.BLACK);
+		on0Text.setUnderline(ip.getPhase() != Phase.READING && ip.isReadOne());
+
+		Text intro = new Text("First, read the tape. Then:\n");
+		intro.setFill(Color.DARKGREY);
+		intro.setFont(Font.font(family, 25));
+		intro.setUnderline(ip.getPhase() == Phase.READING);
+
+		currentInstructionTextFlow.getChildren().clear();
+		currentInstructionTextFlow.getChildren().addAll(stateText, on0Text, on1Text, intro);
 	}
 
 	@Override

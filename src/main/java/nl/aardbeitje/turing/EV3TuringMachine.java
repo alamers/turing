@@ -34,6 +34,10 @@ abstract class EV3TuringMachine implements TuringMachine {
 		calibrated = false;
 	}
 	
+	public boolean isCalibrated() {
+		return calibrated;
+	}
+	
 	private void createCalibrationFilter() {
 		MeanFilter mean = new MeanFilter(getSensor(), MEAN_SIZE);
 		reader = new LinearCalibrationFilter(mean);

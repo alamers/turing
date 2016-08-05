@@ -15,14 +15,14 @@ public class ProgramExecutor {
 	}
 
 	public void runProgram() {
+		viewer.start();
 		Instruction instruction = program.getInstructions().get(Program.START_STATE);
 		for (;;) {
 			String newState = executeInstruction(instruction);
-			if (Program.HALT.equals(instruction.getSpecial())) {
+			instruction = program.getInstructions().get(newState);
+			if (instruction==null) {
 				viewer.halt();
 				return;
-			} else {
-				instruction = program.getInstructions().get(newState);
 			}
 		}
 	}

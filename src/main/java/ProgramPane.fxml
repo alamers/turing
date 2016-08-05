@@ -13,6 +13,8 @@
               <items>
                 <MenuItem fx:id="menuFileOpen" mnemonicParsing="false" text="Open" />
                   <MenuItem fx:id="menuFileRun" disable="true" mnemonicParsing="false" text="Run" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem fx:id="menuFileCalibrate" mnemonicParsing="false" text="Calibrate" />
               </items>
             </Menu>
           <Menu mnemonicParsing="false" text="Test">
@@ -46,7 +48,7 @@
       </SplitPane>
       <AnchorPane prefHeight="200.0" prefWidth="200.0">
          <children>
-            <Label fx:id="logLabel" alignment="TOP_LEFT" text="I read a zero thus I write a one and I go to line 12. I read a zero thus I write a one and I go to line 12" wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <ListView fx:id="logListView" prefHeight="200.0" prefWidth="390.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
          </children>
       </AnchorPane>
    </items>
