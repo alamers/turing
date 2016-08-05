@@ -3,10 +3,11 @@ package nl.aardbeitje.turing;
 public class VirtualTuringMachine  implements TuringMachine {
 
 	private String tape;
-	private int pos = 0;
+	private int pos;
 
-	public VirtualTuringMachine(String initialTape) {
+	public VirtualTuringMachine(String initialTape, int pos) {
 		this.tape = initialTape;
+		this.pos = pos;
 	}
 
 	@Override
@@ -39,12 +40,18 @@ public class VirtualTuringMachine  implements TuringMachine {
 		} else {
 			pos--;
 		}
-		System.out.println(String.format("%" + pos + "s^", "")); 
+		
+		StringBuilder sb = new StringBuilder();
+		for (int i=0; i<pos; i++) {
+			sb.append(" ");
+		}
+		sb.append("^");
+		System.out.println(sb.toString()); 
 	}
 	
 	private void pause() {
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(200);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -123,7 +123,7 @@ public class MainController implements TuringViewer {
 
 	protected TuringMachine instantiateTuringMachine() {
 		if (menuTestRunOnDummy.isSelected()) {
-			return new VirtualTuringMachine("1101110000000000");
+			return new VirtualTuringMachine("0000000000000000", 3);
 		} else {
 			if (machine == null || !machine.isCalibrated()) {
 				showCalibrationWarning();
@@ -134,20 +134,25 @@ public class MainController implements TuringViewer {
 	}
 
 	private void showCalibrationInit() {
-		Alert alert = new Alert(AlertType.INFORMATION);
-		alert.setTitle("Calibration");
-		alert.setHeaderText("Start calibration");
-		alert.setContentText("Check if the reader is on a correct position and the tape reads a 0 at that position");
-		alert.showAndWait();
+		Platform.runLater(() -> {
+			Alert alert = new Alert(AlertType.INFORMATION);
+			alert.setTitle("Calibration");
+			alert.setHeaderText("Start calibration");
+			alert.setContentText(
+					"Check if the reader is on a correct position and the tape reads a 0 at that position");
+			alert.showAndWait();
+		});
 	}
 
 	private void showCalibrationWarning() {
-		Alert alert = new Alert(AlertType.INFORMATION);
-		alert.setTitle("Calibration");
-		alert.setHeaderText("Calibrate first");
-		alert.setContentText(
-				"The Turing Machine has not been calibrated yet. Please calibrate first, see the File menu.");
-		alert.showAndWait();
+		Platform.runLater(() -> {
+			Alert alert = new Alert(AlertType.INFORMATION);
+			alert.setTitle("Calibration");
+			alert.setHeaderText("Calibrate first");
+			alert.setContentText(
+					"The Turing Machine has not been calibrated yet. Please calibrate first, see the File menu.");
+			alert.showAndWait();
+		});
 	}
 
 	public void openFile() {
