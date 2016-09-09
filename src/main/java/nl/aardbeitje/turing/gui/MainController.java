@@ -42,6 +42,8 @@ import nl.aardbeitje.turing.VirtualTuringMachine;
 
 public class MainController implements TuringViewer {
 	private static final String family = "Helvetica";
+	private static final int SIZE_BIG = 60;
+	private static final int SIZE_MEDIUM = 30;
 
 	@FXML
 	private TextFlow currentInstructionTextFlow;
@@ -106,8 +108,6 @@ public class MainController implements TuringViewer {
 	private void calibrate() {
 		machine = new RemoteLegoTuringMachine((RemoteEV3) BrickFinder.getDefault());
 		showCalibrationInit();
-		machine.calibrate();
-		machine.saveCalibration();
 	}
 
 	private void runProgram() {
@@ -141,6 +141,9 @@ public class MainController implements TuringViewer {
 			alert.setContentText(
 					"Check if the reader is on a correct position and the tape reads a 0 at that position");
 			alert.showAndWait();
+
+			machine.calibrate();
+			machine.saveCalibration();
 		});
 	}
 
@@ -205,6 +208,7 @@ public class MainController implements TuringViewer {
 			buildInstructionText(i, ip);
 			addInstruction(currentInstructionTextFlow, false, i.isWrite1On0(), i.isForwardOn0(), i.getStateOn0(),
 					ip.getPhase(), ip.isReadOne());
+			currentInstructionTextFlow.getChildren().add(new Text("\n"));
 			addInstruction(currentInstructionTextFlow, true, i.isWrite1On1(), i.isForwardOn1(), i.getStateOn1(),
 					ip.getPhase(), ip.isReadOne());
 
@@ -246,22 +250,22 @@ public class MainController implements TuringViewer {
 
 	private void buildInstructionText(Instruction i, InstructionPhase ip) {
 		Text stateText = new Text(i.getState() + ": ");
-		stateText.setFont(Font.font(family, FontWeight.BOLD, 50));
+		stateText.setFont(Font.font(family, FontWeight.BOLD, SIZE_BIG));
 		stateText.setFill(Color.BLACK);
 
 		Text on0Text = new Text(i.toStringFor0() + " ");
-		on0Text.setFont(Font.font(family, FontWeight.BOLD, 50));
+		on0Text.setFont(Font.font(family, FontWeight.BOLD, SIZE_BIG));
 		on0Text.setFill(Color.BLACK);
 		on0Text.setUnderline(ip.getPhase() != Phase.READING && !ip.isReadOne());
 
 		Text on1Text = new Text(i.toStringFor1() + "\n");
-		on1Text.setFont(Font.font(family, FontWeight.BOLD, 50));
+		on1Text.setFont(Font.font(family, FontWeight.BOLD, SIZE_BIG));
 		on1Text.setFill(Color.BLACK);
-		on0Text.setUnderline(ip.getPhase() != Phase.READING && ip.isReadOne());
+		on1Text.setUnderline(ip.getPhase() != Phase.READING && ip.isReadOne());
 
-		Text intro = new Text("First, read the tape. Then:\n");
+		Text intro = new Text("\n\nFirst, read the tape. Then:\n\n");
 		intro.setFill(Color.DARKGREY);
-		intro.setFont(Font.font(family, 25));
+		intro.setFont(Font.font(family, SIZE_MEDIUM));
 		intro.setUnderline(ip.getPhase() == Phase.READING);
 
 		currentInstructionTextFlow.getChildren().clear();
@@ -272,7 +276,7 @@ public class MainController implements TuringViewer {
 	public void halt() {
 		Platform.runLater(() -> {
 			Text ready = new Text("Program completed!");
-			ready.setFont(Font.font(family, FontWeight.BOLD, 50));
+			ready.setFont(Font.font(family, FontWeight.BOLD, SIZE_BIG));
 			ready.setFill(Color.BLACK);
 
 			currentInstructionTextFlow.getChildren().clear();
@@ -284,35 +288,35 @@ public class MainController implements TuringViewer {
 			Phase p, boolean read1) {
 		Text a = new Text("On a ");
 		a.setFill(Color.DARKGREY);
-		a.setFont(Font.font(family, 25));
+		a.setFont(Font.font(family, SIZE_MEDIUM));
 		a.setUnderline(p == Phase.READING || (is1 == read1 && p == Phase.DECIDING));
 		Text b = new Text(is1 ? "1" : "0");
 		b.setFill(Color.BLACK);
-		b.setFont(Font.font(family, 25));
+		b.setFont(Font.font(family, SIZE_MEDIUM));
 		b.setUnderline(p == Phase.READING || (is1 == read1 && p == Phase.DECIDING));
 		Text c = new Text(", write a ");
 		c.setFill(Color.DARKGREY);
-		c.setFont(Font.font(family, 25));
+		c.setFont(Font.font(family, SIZE_MEDIUM));
 		c.setUnderline(p == Phase.WRITING && is1 == read1);
 		Text d = new Text(isWrite1 ? "1" : "0");
 		d.setFill(Color.BLACK);
-		d.setFont(Font.font(family, 25));
+		d.setFont(Font.font(family, SIZE_MEDIUM));
 		d.setUnderline(p == Phase.WRITING && is1 == read1);
 		Text e = new Text(", move tape ");
 		e.setFill(Color.DARKGREY);
-		e.setFont(Font.font(family, 25));
+		e.setFont(Font.font(family, SIZE_MEDIUM));
 		e.setUnderline(p == Phase.MOVING && is1 == read1);
 		Text f = new Text(isForward ? "FORWARD" : "BACKWARD");
 		f.setFill(Color.BLACK);
-		f.setFont(Font.font(family, 25));
+		f.setFont(Font.font(family, SIZE_MEDIUM));
 		f.setUnderline(p == Phase.MOVING && is1 == read1);
 		Text g = new Text(", go to line ");
 		g.setFill(Color.DARKGREY);
-		g.setFont(Font.font(family, 25));
+		g.setFont(Font.font(family, SIZE_MEDIUM));
 		g.setUnderline(p == Phase.CHANGING && is1 == read1);
 		Text h = new Text(state + "\n");
 		h.setFill(Color.BLACK);
-		h.setFont(Font.font(family, 25));
+		h.setFont(Font.font(family, SIZE_MEDIUM));
 		h.setUnderline(p == Phase.CHANGING && is1 == read1);
 
 		textFlow.getChildren().addAll(a, b, c, d, e, f, g, h);
